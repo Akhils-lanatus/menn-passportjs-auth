@@ -4,12 +4,12 @@ import { refreshAccessToken } from "../utils/refreshAccessToken.js";
 
 export const accessTokenAutoRefresh = async (req, res, next) => {
   try {
-    const accessToken = req.cookies.accessToken;
-    if (accessToken || !isTokenExpired(accessToken)) {
-      req.headers["authorization"] = `Bearer ${accessToken}`;
+    const cookiesAccessToken = req.cookies.accessToken;
+    if (cookiesAccessToken || !isTokenExpired(cookiesAccessToken)) {
+      req.headers["authorization"] = `Bearer ${cookiesAccessToken}`;
     }
 
-    if (!accessToken || isTokenExpired(accessToken)) {
+    if (!cookiesAccessToken || isTokenExpired(cookiesAccessToken)) {
       const refToken = req.cookies.refreshToken;
       if (!refToken) {
         return res.status(400).json({
