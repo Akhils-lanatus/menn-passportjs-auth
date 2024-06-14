@@ -1,7 +1,8 @@
 import { UserModel } from "../models/user.model.js";
 import { OtpModel } from "../models/otp.model.js";
-import nodemailer from "nodemailer";
+import { SendOtpForEmailVerification } from "../utils/EmailVerification.js";
 import bcrypt from "bcrypt";
+
 const UserRegister = async (req, res) => {
   try {
     const { name, email, password, confirm_password } = req.body;
@@ -46,7 +47,7 @@ const UserRegister = async (req, res) => {
       { password: 0 }
     );
 
-    SendOtpForEmailVerification(createdUser);
+    await SendOtpForEmailVerification(createdUser);
 
     if (!createdUser) {
       return res
@@ -56,7 +57,7 @@ const UserRegister = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "User Registered Successfully",
+      message: "User Registered Successfully, OTP Sent to email to verify",
       user: createdUser,
     });
   } catch (error) {
@@ -68,103 +69,103 @@ const UserRegister = async (req, res) => {
   }
 };
 
-const SendOtpForEmailVerification = async (user) => {
-  console.log(user);
-  const GeneratedOtp = Math.floor(1000 + Math.random() * 9000);
-  await OtpModel.updateOne(
-    { userId: user._id },
-    { $set: { otp: GeneratedOtp, createdAt: new Date() } },
-    { upsert: true }
-  );
-
-  let htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            border: 1px solid #e0e0e0;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-        }
-        .header {
-            text-align: center;
-            background-color: #007bff;
-            color: #ffffff;
-            padding: 10px;
-            border-radius: 5px 5px 0 0;
-        }
-        .content {
-            padding: 20px;
-        }
-        .otp {
-            font-size: 20px;
-            font-weight: bold;
-            color: #007bff;
-            text-align: center;
-            margin: 20px 0;
-        }
-        .footer {
-            text-align: center;
-            font-size: 12px;
-            color: #777777;
-            padding: 10px;
-            border-top: 1px solid #e0e0e0;
-            margin-top: 20px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h2>OTP Verification</h2>
-        </div>
-        <div class="content">
-            <p>Dear User,</p>
-            <p>Thank you for using our service. Please use the following One-Time Password (OTP) to complete your verification process:</p>
-            <div class="otp">${GeneratedOtp}</div>
-            <p>This OTP is valid for 1 minutes. Do not share this OTP with anyone.</p>
-            <p>Best regards,</p>
-            <p>Your Company</p>
-        </div>
-        <div class="footer">
-            <p>If you did not request this OTP, please ignore this email or contact support.</p>
-        </div>
-    </div>
-</body>
-</html>
-    `;
-
-  const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
-  transporter.sendMail(
-    {
-      from: process.env.EMAIL_FROM,
-      to: user.email,
-      subject: "Your OTP Verification Code",
-      html: htmlContent,
-    },
-    (error, info) => {
-      if (error) {
-        console.log(error);
-      }
-      console.log("Message sent: %s", info);
+const VerifyUserEmail = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
     }
-  );
+
+    const existingUser = await UserModel.findOne({ email });
+
+    if (!existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "No such email found",
+      });
+    }
+
+    if (existingUser.is_verified) {
+      return res.status(400).json({
+        success: false,
+        message: "Already verified",
+      });
+    }
+    const existingUserInOtpDB = await OtpModel.findOne({
+      userId: existingUser._id,
+    });
+
+    // if (
+    //   existingUserInOtpDB &&
+    //   !existingUser.is_verified &&
+    //   existingUserInOtpDB.otp !== otp
+    // ) {
+    //   console.log("Inside");
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Invalid otp",
+    //   });
+    // }
+
+    // if (!existingUserInOtpDB) {
+    // if (!existingUser.is_verified) {
+    //   await SendOtpForEmailVerification(existingUser);
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Invalid otp, new otp sent to your email",
+    //   });
+    // }
+    // }
+
+    if (!existingUserInOtpDB) {
+      if (!existingUser.is_verified) {
+        await SendOtpForEmailVerification(existingUser);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid otp, new otp sent to your email",
+        });
+      }
+    } else {
+      if (!existingUser.is_verified) {
+        if (existingUserInOtpDB.otp !== otp) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid OTP",
+          });
+        }
+      }
+    }
+
+    const currentTime = new Date();
+    const otpExpirationTime = new Date(
+      existingUserInOtpDB.createdAt.getTime() + 15 * 60 * 1000
+    );
+
+    if (currentTime > otpExpirationTime) {
+      await SendOtpForEmailVerification(existingUser);
+      return res.status(400).json({
+        success: false,
+        message: "OTP Expired, new otp sent to your email",
+      });
+    }
+
+    await UserModel.findByIdAndUpdate(existingUser._id, {
+      $set: { is_verified: true },
+    });
+    await OtpModel.deleteMany({ userId: existingUser._id });
+    return res.status(200).json({
+      success: true,
+      message: "Email Verified successfully",
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: "Error in verifying otp, please try again",
+    });
+  }
 };
 
-export { UserRegister };
+export { UserRegister, VerifyUserEmail };
