@@ -1,6 +1,7 @@
 import express from "express";
-const router = express.Router();
 import passport from "passport";
+import { setAuthHeader } from "../middlewares/setAuthHeader.js";
+const router = express.Router();
 import {
   UserRegister,
   VerifyUserEmail,
@@ -24,6 +25,7 @@ router.post("/refresh-token", GetNewAccessToken);
 //REFRESH_TOKEN || GET
 router.get(
   "/profile",
+  setAuthHeader,
   passport.authenticate("jwt", { session: false }),
   UserProfile
 );
