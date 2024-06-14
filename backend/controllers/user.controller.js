@@ -2,6 +2,9 @@ import { UserModel } from "../models/user.model.js";
 import { OtpModel } from "../models/otp.model.js";
 import { SendOtpForEmailVerification } from "../utils/EmailVerification.js";
 import bcrypt from "bcrypt";
+import { generateTokens } from "../utils/generateTokens.js";
+import { generateUserCookies } from "../utils/generateCookies.js";
+import { refreshAccessToken } from "../utils/refreshAccessToken.js";
 
 const UserRegister = async (req, res) => {
   try {
@@ -168,4 +171,100 @@ const VerifyUserEmail = async (req, res) => {
   }
 };
 
-export { UserRegister, VerifyUserEmail };
+const UserLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+
+    const existingUser = await UserModel.findOne({ email });
+    if (!existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "No such email found",
+      });
+    }
+
+    if (!existingUser.is_verified) {
+      return res.status(400).json({
+        success: false,
+        message: "Your account is not verified",
+      });
+    }
+
+    const comparePassword = await bcrypt.compare(
+      password,
+      existingUser.password
+    );
+
+    if (!comparePassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    const { accessToken, refreshToken, accessTokenExp, refreshTokenExp } =
+      await generateTokens(existingUser);
+    generateUserCookies(
+      res,
+      accessToken,
+      refreshToken,
+      accessTokenExp,
+      refreshTokenExp
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Login Successful",
+      user: {
+        id: existingUser._id,
+        email: existingUser.email,
+        name: existingUser.name,
+      },
+      roles: existingUser.roles,
+      accessToken,
+      refreshToken,
+      accessTokenExp,
+      is_auth: true,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: "Error while logging , please try again ",
+    });
+  }
+};
+
+const GetNewAccessToken = async (req, res) => {
+  try {
+    const { accessToken, refreshToken, accessTokenExp, refreshTokenExp } =
+      await refreshAccessToken(req, res);
+    generateUserCookies(
+      res,
+      accessToken,
+      refreshToken,
+      accessTokenExp,
+      refreshTokenExp
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "New tokens generated",
+      accessToken,
+      refreshToken,
+      accessTokenExp,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: "Error while generating token, please try again ",
+    });
+  }
+};
+
+export { UserRegister, VerifyUserEmail, UserLogin, GetNewAccessToken };
