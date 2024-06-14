@@ -8,6 +8,8 @@ import {
   UserLogin,
   GetNewAccessToken,
   UserProfile,
+  UserLogout,
+  ChangeUserPassword,
 } from "../controllers/user.controller.js";
 
 //USER-REGISTER || POST
@@ -28,5 +30,19 @@ router.get(
   accessTokenAutoRefresh,
   passport.authenticate("jwt", { session: false }),
   UserProfile
+);
+
+router.post(
+  "/logout",
+  accessTokenAutoRefresh,
+  passport.authenticate("jwt", { session: false }),
+  UserLogout
+);
+
+router.post(
+  "/change-password",
+  accessTokenAutoRefresh,
+  passport.authenticate("jwt", { session: false }),
+  ChangeUserPassword
 );
 export default router;

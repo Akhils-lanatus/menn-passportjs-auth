@@ -14,7 +14,7 @@ export const accessTokenAutoRefresh = async (req, res, next) => {
       if (!refToken) {
         return res.status(400).json({
           success: false,
-          message: "Refresh token is missing",
+          message: "Unauthorized Request - Missing Token",
         });
       }
       const { accessToken, refreshToken, accessTokenExp, refreshTokenExp } =

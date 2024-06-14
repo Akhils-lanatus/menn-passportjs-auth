@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import { generateTokens } from "../utils/generateTokens.js";
 import { generateUserCookies } from "../utils/generateCookies.js";
 import { refreshAccessToken } from "../utils/refreshAccessToken.js";
+import { UserRefreshTokenModel } from "../models/userRefreshToken.model.js";
 
 const UserRegister = async (req, res) => {
   try {
@@ -274,10 +275,64 @@ const UserProfile = async (req, res) => {
   });
 };
 
+const ChangeUserPassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword, confirm_password } = req.body;
+    const token = req.cookies.refreshToken;
+    const userData = await UserRefreshTokenModel.aggregate([
+      { $match: { token } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "joinedData",
+        },
+      },
+      {
+        $unwind: "$joinedData",
+      },
+      {
+        $project: {
+          "joinedData._id": 1,
+          _id: 0,
+        },
+      },
+    ]);
+    return res.json({ userData });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: "Unable to change password, please try again",
+    });
+  }
+};
+
+const UserLogout = async (req, res) => {
+  try {
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+    res.clearCookie("is_auth");
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({
+      success: false,
+      message: "Unable to logout, please try again",
+    });
+  }
+};
+
 export {
   UserRegister,
   VerifyUserEmail,
   UserLogin,
   GetNewAccessToken,
   UserProfile,
+  UserLogout,
+  ChangeUserPassword,
 };
