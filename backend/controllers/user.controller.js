@@ -267,4 +267,17 @@ const GetNewAccessToken = async (req, res) => {
   }
 };
 
-export { UserRegister, VerifyUserEmail, UserLogin, GetNewAccessToken };
+const UserProfile = async (req, res) => {
+  return res.status(200).json({
+    success: true,
+    user: req.user,
+  });
+};
+
+export {
+  UserRegister,
+  VerifyUserEmail,
+  UserLogin,
+  GetNewAccessToken,
+  UserProfile,
+};
