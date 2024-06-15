@@ -5,7 +5,6 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import { connectDB } from "./config/connectDB.js";
 import UserRoute from "./routes/user.route.js";
-import passport from "passport";
 import "./config/passport-jwt-strategy.js";
 const app = express();
 

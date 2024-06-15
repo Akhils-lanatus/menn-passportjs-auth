@@ -257,6 +257,12 @@ const UserProfile = async (req, res) => {
 const ChangeUserPassword = async (req, res) => {
   try {
     const { oldPassword, newPassword, confirm_password } = req.body;
+    if (!oldPassword || !newPassword || !confirm_password) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
     const token = req.cookies.refreshToken;
     const userData = await UserRefreshTokenModel.aggregate([
       { $match: { token } },
@@ -269,17 +275,57 @@ const ChangeUserPassword = async (req, res) => {
         },
       },
       {
-        $unwind: "$joinedData",
+        $addFields: {
+          joinedData: { $arrayElemAt: ["$joinedData", 0] },
+        },
       },
       {
         $project: {
-          "joinedData._id": 1,
+          user_id: "$joinedData._id",
+          user_pass: "$joinedData.password",
           _id: 0,
         },
       },
     ]);
-    return res.json({ userData });
+
+    if (!userData) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid entry ",
+      });
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(
+      oldPassword,
+      userData[0].user_pass
+    );
+    if (!isPasswordCorrect) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+    if (newPassword.trim() !== confirm_password.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Password didn't match",
+      });
+    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPass = await bcrypt.hash(newPassword, salt);
+    await UserModel.findByIdAndUpdate(
+      userData[0].user_id,
+      {
+        $set: { password: hashedPass },
+      },
+      { new: true }
+    );
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
   } catch (error) {
+    console.log(error);
     return res.status(400).json({
       success: false,
       message: "Unable to change password, please try again",
