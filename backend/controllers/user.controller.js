@@ -102,28 +102,6 @@ const VerifyUserEmail = async (req, res) => {
       userId: existingUser._id,
     });
 
-    // if (
-    //   existingUserInOtpDB &&
-    //   !existingUser.is_verified &&
-    //   existingUserInOtpDB.otp !== otp
-    // ) {
-    //   console.log("Inside");
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Invalid otp",
-    //   });
-    // }
-
-    // if (!existingUserInOtpDB) {
-    // if (!existingUser.is_verified) {
-    //   await SendOtpForEmailVerification(existingUser);
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Invalid otp, new otp sent to your email",
-    //   });
-    // }
-    // }
-
     if (!existingUserInOtpDB) {
       if (!existingUser.is_verified) {
         await SendOtpForEmailVerification(existingUser);
@@ -261,9 +239,10 @@ const GetNewAccessToken = async (req, res) => {
       accessTokenExp,
     });
   } catch (error) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
-      message: "Error while generating token, please try again ",
+      message:
+        error?.message || "Error while generating token, please try again ",
     });
   }
 };

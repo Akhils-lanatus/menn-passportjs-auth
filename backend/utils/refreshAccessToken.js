@@ -10,20 +10,14 @@ export const refreshAccessToken = async (req, res) => {
     });
 
     if (!userUserRefreshToken) {
-      return res.status(400).json({
-        success: true,
-        message: "Invalid token",
-      });
+      throw new Error("Invalid token");
     }
 
     const tokenDetails = jwt.verify(oldRefreshToken, process.env.REFRESH_TOKEN);
 
     const user = await UserModel.findById(tokenDetails._id);
     if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "User not found",
-      });
+      throw new Error("User not found");
     }
 
     const userRefreshTokenModelData = await UserRefreshTokenModel.findOne({
@@ -34,14 +28,12 @@ export const refreshAccessToken = async (req, res) => {
       oldRefreshToken !== userRefreshTokenModelData.token ||
       userRefreshTokenModelData.blackListed
     ) {
-      return res.status(400).json({
-        success: false,
-        message: "Unauthorized access",
-      });
+      throw new Error("Unauthorized access");
     }
 
     const { accessToken, refreshToken, accessTokenExp, refreshTokenExp } =
       await generateTokens(user);
+
     return {
       accessToken,
       refreshToken,
@@ -49,6 +41,6 @@ export const refreshAccessToken = async (req, res) => {
       refreshTokenExp,
     };
   } catch (error) {
-    console.log(`Error in token::${error}`);
+    throw error;
   }
 };
