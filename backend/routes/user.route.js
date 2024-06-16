@@ -11,6 +11,7 @@ import {
   UserLogout,
   ChangeUserPassword,
   SendUserPasswordResetEmail,
+  ResetUserPassword,
 } from "../controllers/user.controller.js";
 
 //USER-REGISTER || POST
@@ -28,7 +29,11 @@ router.post("/refresh-token", GetNewAccessToken);
 //PASSWORD-RESET-LINK || POST
 router.post("/reset-password-link", SendUserPasswordResetEmail);
 
+//PASSWORD-RESET|| POST
+router.post("/reset-password/:id/:token", ResetUserPassword);
+
 //PROTECTED-ROUTES
+
 //REFRESH_TOKEN || GET
 router.get(
   "/profile",

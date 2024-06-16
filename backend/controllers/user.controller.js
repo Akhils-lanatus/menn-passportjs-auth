@@ -368,7 +368,7 @@ const SendUserPasswordResetEmail = async (req, res) => {
         message: "No such email found",
       });
     }
-    const secret = user._id + process.env.ACCESS_TOKEN_SECRET;
+    const secret = user._id + process.env.ACCESS_TOKEN;
     const token = jwt.sign({ userId: user._id }, secret, {
       expiresIn: "15m",
     });
@@ -473,6 +473,55 @@ const SendUserPasswordResetEmail = async (req, res) => {
   }
 };
 
+const ResetUserPassword = async (req, res) => {
+  try {
+    const { password, confirm_password } = req.body;
+    const { id, token } = req.params;
+    if (!password || !confirm_password) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+    const user = await UserModel.findById(id);
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "No such user found",
+      });
+    }
+
+    const secret = user._id + process.env.ACCESS_TOKEN;
+    jwt.verify(token, secret);
+
+    if (password.trim() !== confirm_password.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Password didn't match",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPass = await bcrypt.hash(password, salt);
+
+    user.password = hashedPass;
+    user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successfull",
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message:
+        error.name === "TokenExpiredError"
+          ? "Token Expired"
+          : "Unable to reset password, please try again",
+    });
+  }
+};
+
 export {
   UserRegister,
   VerifyUserEmail,
@@ -482,4 +531,5 @@ export {
   UserLogout,
   ChangeUserPassword,
   SendUserPasswordResetEmail,
+  ResetUserPassword,
 };
