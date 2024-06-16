@@ -1,12 +1,13 @@
 import { UserModel } from "../models/user.model.js";
 import { OtpModel } from "../models/otp.model.js";
 import { SendOtpForEmailVerification } from "../utils/EmailVerification.js";
-import bcrypt from "bcrypt";
 import { generateTokens } from "../utils/generateTokens.js";
 import { generateUserCookies } from "../utils/generateCookies.js";
 import { refreshAccessToken } from "../utils/refreshAccessToken.js";
 import { UserRefreshTokenModel } from "../models/userRefreshToken.model.js";
-
+import bcrypt from "bcrypt";
+import nodemailer from "nodemailer";
+import jwt from "jsonwebtoken";
 const UserRegister = async (req, res) => {
   try {
     const { name, email, password, confirm_password } = req.body;
@@ -352,6 +353,126 @@ const UserLogout = async (req, res) => {
   }
 };
 
+const SendUserPasswordResetEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing email " });
+    }
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "No such email found",
+      });
+    }
+    const secret = user._id + process.env.ACCESS_TOKEN_SECRET;
+    const token = jwt.sign({ userId: user._id }, secret, {
+      expiresIn: "15m",
+    });
+
+    const resetPassLink = `${process.env.FRONTEND_HOST}/account/reset-password/${user._id}/${token}`;
+
+    const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Reset Email</title>
+    <style>
+        /* Reset styles */
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+        }
+        p {
+            margin-bottom: 20px;
+            color: #666;
+        }
+        .reset-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Password Reset Request</h2>
+        <p>You have requested to reset your password. Click the button below to reset it:</p>
+        <a href="${resetPassLink}" class="reset-link">Reset Password</a>
+        <p>If you didn't request this, you can safely ignore this email.</p>
+    </div>
+</body>
+</html>
+`;
+
+    const transporter = nodemailer.createTransport({
+      service: process.env.EMAIL_HOST,
+      secure: true,
+      port: process.env.EMAIL_PORT,
+      tls: {
+        rejectUnauthorized: true,
+      },
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+    transporter.sendMail(
+      {
+        from: process.env.EMAIL_FROM,
+        to: email,
+        subject: "Reset Password",
+        html: htmlContent,
+      },
+      (error, info) => {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log(info);
+          if (info.response.includes("OK")) {
+            console.log(`Link sent`);
+          }
+        }
+      }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset link sent to your email",
+      resetPassLink,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: "Unable to send link, please try again",
+    });
+  }
+};
+
 export {
   UserRegister,
   VerifyUserEmail,
@@ -360,4 +481,5 @@ export {
   UserProfile,
   UserLogout,
   ChangeUserPassword,
+  SendUserPasswordResetEmail,
 };

@@ -10,6 +10,7 @@ import {
   UserProfile,
   UserLogout,
   ChangeUserPassword,
+  SendUserPasswordResetEmail,
 } from "../controllers/user.controller.js";
 
 //USER-REGISTER || POST
@@ -24,6 +25,10 @@ router.post("/login", UserLogin);
 //REFRESH_TOKEN || POST
 router.post("/refresh-token", GetNewAccessToken);
 
+//PASSWORD-RESET-LINK || POST
+router.post("/reset-password-link", SendUserPasswordResetEmail);
+
+//PROTECTED-ROUTES
 //REFRESH_TOKEN || GET
 router.get(
   "/profile",
@@ -45,4 +50,5 @@ router.post(
   passport.authenticate("jwt", { session: false }),
   ChangeUserPassword
 );
+
 export default router;

@@ -75,9 +75,12 @@ const SendOtpForEmailVerification = async (user) => {
     `;
 
   const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
+    service: process.env.EMAIL_HOST,
+    secure: true,
     port: process.env.EMAIL_PORT,
-    secure: false,
+    tls: {
+      rejectUnauthorized: true,
+    },
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
