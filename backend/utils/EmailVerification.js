@@ -10,6 +10,8 @@ const SendOtpForEmailVerification = async (user) => {
     { upsert: true }
   );
 
+  const verifyEmailFrontEndLink = `${process.env.FRONTEND_HOST}/user/account/verify-email`;
+
   let htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -60,7 +62,7 @@ const SendOtpForEmailVerification = async (user) => {
         </div>
         <div class="content">
             <p>Dear User,</p>
-            <p>Thank you for using our service. Please use the following One-Time Password (OTP) to complete your verification process:</p>
+            <p>Thank you for using our service. Please use the following One-Time Password (OTP) to complete your verification process: ${verifyEmailFrontEndLink}</p>
             <div class="otp">${GeneratedOtp}</div>
             <p>This OTP is valid for 5 minutes. Do not share this OTP with anyone.</p>
             <p>Best regards,</p>
