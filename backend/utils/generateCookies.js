@@ -20,5 +20,10 @@ const generateUserCookies = (
     secure: true,
     maxAge: refreshTokenMaxAge,
   });
+  res.cookie("is_auth", 1, {
+    httpOnly: false,
+    secure: false,
+    maxAge: refreshTokenMaxAge,
+  });
 };
 export { generateUserCookies };

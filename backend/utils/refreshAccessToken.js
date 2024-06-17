@@ -32,7 +32,7 @@ export const refreshAccessToken = async (req, res) => {
     }
 
     const { accessToken, refreshToken, accessTokenExp, refreshTokenExp } =
-      await generateTokens(user);
+      await generateTokens(req, user);
 
     return {
       accessToken,

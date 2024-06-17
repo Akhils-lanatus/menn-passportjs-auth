@@ -12,13 +12,14 @@ export const accessTokenAutoRefresh = async (req, res, next) => {
     if (!cookiesAccessToken || isTokenExpired(cookiesAccessToken)) {
       const refToken = req.cookies.refreshToken;
       if (!refToken) {
-        return res.status(400).json({
+        return res.status(200).json({
           success: false,
-          message: "Unauthorized Request - Missing Token",
+          message: "Unauthorized Request - Please Login",
         });
       }
       const { accessToken, refreshToken, accessTokenExp, refreshTokenExp } =
         await refreshAccessToken(req, res);
+
       generateUserCookies(
         res,
         accessToken,
@@ -26,10 +27,12 @@ export const accessTokenAutoRefresh = async (req, res, next) => {
         accessTokenExp,
         refreshTokenExp
       );
+
       req.headers["authorization"] = `Bearer ${accessToken}`;
     }
     next();
   } catch (error) {
+    console.log(error);
     res.status(400).json({
       success: false,
       message: "Access token is missing or is invalid",

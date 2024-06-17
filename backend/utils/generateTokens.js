@@ -1,10 +1,11 @@
 import jwt from "jsonwebtoken";
 import { UserRefreshTokenModel } from "../models/userRefreshToken.model.js";
-const generateTokens = async (user) => {
+const generateTokens = async (req, user) => {
   try {
     const payload = { _id: user._id, roles: user.roles };
     const accessTokenExp = Math.floor(Date.now() / 1000) + 100;
     const refreshTokenExp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 5;
+
     const refreshToken = jwt.sign(
       { ...payload, exp: refreshTokenExp },
       process.env.REFRESH_TOKEN
@@ -14,18 +15,17 @@ const generateTokens = async (user) => {
       process.env.ACCESS_TOKEN
     );
 
-    await UserRefreshTokenModel.findOneAndDelete({
-      userId: user._id,
-    });
-
-    await UserRefreshTokenModel.create({
-      userId: user._id,
-      token: refreshToken,
-    });
+    await UserRefreshTokenModel.findOneAndUpdate(
+      {
+        userId: user._id,
+      },
+      { token: req.cookies.refreshToken || refreshToken },
+      { upsert: true }
+    );
 
     return {
       accessToken,
-      refreshToken,
+      refreshToken: req.cookies.refreshToken || refreshToken,
       accessTokenExp,
       refreshTokenExp,
     };

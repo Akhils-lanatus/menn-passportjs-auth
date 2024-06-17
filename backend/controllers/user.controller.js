@@ -12,14 +12,14 @@ const UserRegister = async (req, res) => {
   try {
     const { name, email, password, confirm_password } = req.body;
     if (!name || !email || !password || !confirm_password) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "All fields are required",
       });
     }
 
     if (password?.trim() !== confirm_password?.trim()) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "Password didn't match",
       });
@@ -27,7 +27,7 @@ const UserRegister = async (req, res) => {
 
     const userExist = await UserModel.findOne({ email });
     if (userExist) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "Email already registered",
       });
@@ -36,7 +36,7 @@ const UserRegister = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPass = await bcrypt.hash(password, salt);
     if (!hashedPass) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "Error in hashing pass",
       });
@@ -56,7 +56,7 @@ const UserRegister = async (req, res) => {
 
     if (!createdUser) {
       return res
-        .status(500)
+        .status(200)
         .json({ success: false, message: "User registration failed" });
     }
 
@@ -78,7 +78,7 @@ const VerifyUserEmail = async (req, res) => {
   try {
     const { email, otp } = req.body;
     if (!email || !otp) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "All fields are required",
       });
@@ -87,14 +87,14 @@ const VerifyUserEmail = async (req, res) => {
     const existingUser = await UserModel.findOne({ email });
 
     if (!existingUser) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "No such email found",
       });
     }
 
     if (existingUser.is_verified) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "Already verified",
       });
@@ -106,7 +106,7 @@ const VerifyUserEmail = async (req, res) => {
     if (!existingUserInOtpDB) {
       if (!existingUser.is_verified) {
         await SendOtpForEmailVerification(existingUser);
-        return res.status(400).json({
+        return res.status(200).json({
           success: false,
           message: "Invalid otp, new otp sent to your email",
         });
@@ -114,7 +114,7 @@ const VerifyUserEmail = async (req, res) => {
     } else {
       if (!existingUser.is_verified) {
         if (existingUserInOtpDB.otp !== otp) {
-          return res.status(400).json({
+          return res.status(200).json({
             success: false,
             message: "Invalid OTP",
           });
@@ -129,7 +129,7 @@ const VerifyUserEmail = async (req, res) => {
 
     if (currentTime > otpExpirationTime) {
       await SendOtpForEmailVerification(existingUser);
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "OTP Expired, new otp sent to your email",
       });
@@ -155,7 +155,7 @@ const UserLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "All fields are required",
       });
@@ -163,14 +163,14 @@ const UserLogin = async (req, res) => {
 
     const existingUser = await UserModel.findOne({ email });
     if (!existingUser) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "No such email found",
       });
     }
 
     if (!existingUser.is_verified) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "Your account is not verified",
       });
@@ -182,14 +182,14 @@ const UserLogin = async (req, res) => {
     );
 
     if (!comparePassword) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "Invalid credentials",
       });
     }
 
     const { accessToken, refreshToken, accessTokenExp, refreshTokenExp } =
-      await generateTokens(existingUser);
+      await generateTokens(req, existingUser);
     generateUserCookies(
       res,
       accessToken,
@@ -259,7 +259,7 @@ const ChangeUserPassword = async (req, res) => {
   try {
     const { oldPassword, newPassword, confirm_password } = req.body;
     if (!oldPassword || !newPassword || !confirm_password) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "All fields are required",
       });
@@ -290,7 +290,7 @@ const ChangeUserPassword = async (req, res) => {
     ]);
 
     if (!userData) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "Invalid entry ",
       });
@@ -301,13 +301,13 @@ const ChangeUserPassword = async (req, res) => {
       userData[0].user_pass
     );
     if (!isPasswordCorrect) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "Invalid credentials",
       });
     }
     if (newPassword.trim() !== confirm_password.trim()) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "Password didn't match",
       });
@@ -358,12 +358,12 @@ const SendUserPasswordResetEmail = async (req, res) => {
     const { email } = req.body;
     if (!email) {
       return res
-        .status(400)
+        .status(200)
         .json({ success: false, message: "Missing email " });
     }
     const user = await UserModel.findOne({ email });
     if (!user) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "No such email found",
       });
@@ -478,14 +478,14 @@ const ResetUserPassword = async (req, res) => {
     const { password, confirm_password } = req.body;
     const { id, token } = req.params;
     if (!password || !confirm_password) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "All fields are required",
       });
     }
     const user = await UserModel.findById(id);
     if (!user) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "No such user found",
       });
@@ -495,7 +495,7 @@ const ResetUserPassword = async (req, res) => {
     jwt.verify(token, secret);
 
     if (password.trim() !== confirm_password.trim()) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "Password didn't match",
       });
@@ -509,7 +509,7 @@ const ResetUserPassword = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Password reset successfull",
+      message: "Password reset successful",
     });
   } catch (error) {
     return res.status(400).json({
