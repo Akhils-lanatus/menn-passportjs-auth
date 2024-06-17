@@ -13,9 +13,9 @@ import {
   SendUserPasswordResetEmail,
   ResetUserPassword,
 } from "../controllers/user.controller.js";
-
+import { upload } from "../middlewares/multer.js";
 //USER-REGISTER || POST
-router.post("/register", UserRegister);
+router.post("/register", upload.single("avatar"), UserRegister);
 
 //VERIFY-EMAIL || POST
 router.post("/verify-email", VerifyUserEmail);

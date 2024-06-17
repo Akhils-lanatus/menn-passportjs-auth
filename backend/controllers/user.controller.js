@@ -5,19 +5,21 @@ import { generateTokens } from "../utils/generateTokens.js";
 import { generateUserCookies } from "../utils/generateCookies.js";
 import { refreshAccessToken } from "../utils/refreshAccessToken.js";
 import { UserRefreshTokenModel } from "../models/userRefreshToken.model.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
+
 const UserRegister = async (req, res) => {
   try {
     const { name, email, password, confirm_password } = req.body;
+
     if (!name || !email || !password || !confirm_password) {
       return res.status(200).json({
         success: false,
         message: "All fields are required",
       });
     }
-
     if (password?.trim() !== confirm_password?.trim()) {
       return res.status(200).json({
         success: false,
@@ -41,10 +43,20 @@ const UserRegister = async (req, res) => {
         message: "Error in hashing pass",
       });
     }
+
+    const avatarPath = req.file?.path;
+    if (!avatarPath) {
+      return res.status(400).json({
+        success: false,
+        message: "Avatar is Required",
+      });
+    }
+    const avatar = await uploadOnCloudinary(avatarPath);
     const user = await UserModel.create({
       name,
       email,
       password: hashedPass,
+      avatar: avatar?.url,
     });
 
     const createdUser = await UserModel.findOne(
@@ -59,11 +71,9 @@ const UserRegister = async (req, res) => {
         .status(200)
         .json({ success: false, message: "User registration failed" });
     }
-
     return res.status(201).json({
       success: true,
       message: "User Registered Successfully, OTP Sent to email to verify",
-      user: createdUser,
     });
   } catch (error) {
     return res.status(500).json({

@@ -42,6 +42,7 @@ export default function SignUp() {
             email: "",
             password: "",
             confirm_password: "",
+            avatar: "",
           }}
           validationSchema={Yup.object({
             name: Yup.string()
@@ -60,14 +61,22 @@ export default function SignUp() {
                 [Yup.ref("password"), null],
                 "Password and Confirm Password doesn't match"
               ),
+            avatar: Yup.string().required("Avatar is required"),
           })}
           onSubmit={async (values, { resetForm }) => {
             try {
+              console.log(values);
               setIsLoading(true);
               const response = await axios.post(
                 `${BACKEND_URL}/register`,
-                values
+                values,
+                {
+                  headers: {
+                    "Content-Type": "multipart/form-data",
+                  },
+                }
               );
+
               if (response.data.success) {
                 resetForm();
                 showToast("success", response.data.message);
@@ -83,72 +92,94 @@ export default function SignUp() {
             }
           }}
         >
-          <Form>
-            <Box sx={{ mt: 3 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <Field
-                    as={TextField}
-                    name="name"
-                    required
-                    fullWidth
-                    id="name"
-                    label=" Name"
-                    helperText={<ErrorMessage name="name" />}
-                  />
+          {() => (
+            <Form>
+              <Box sx={{ mt: 3 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <Field
+                      as={TextField}
+                      name="name"
+                      required
+                      fullWidth
+                      id="name"
+                      label=" Name"
+                      helperText={<ErrorMessage name="name" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Field
+                      as={TextField}
+                      required
+                      fullWidth
+                      id="email"
+                      label="Email"
+                      name="email"
+                      helperText={<ErrorMessage name="email" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Field
+                      as={TextField}
+                      required
+                      fullWidth
+                      id="password"
+                      label="Password"
+                      name="password"
+                      type="password"
+                      helperText={<ErrorMessage name="password" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Field
+                      as={TextField}
+                      required
+                      fullWidth
+                      name="confirm_password"
+                      label="Confirm Password"
+                      type="password"
+                      id="confirm_password"
+                      helperText={<ErrorMessage name="confirm_password" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Field name="avatar">
+                      {({ form }) => (
+                        <TextField
+                          required
+                          fullWidth
+                          type="file"
+                          id="avatar"
+                          inputProps={{
+                            accept: ".jpg,.png,.jpeg",
+                          }}
+                          onChange={(event) => {
+                            const file = event.currentTarget.files[0];
+                            form.setFieldValue("avatar", file);
+                          }}
+                          helperText={<ErrorMessage name="avatar" />}
+                        />
+                      )}
+                    </Field>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12}>
-                  <Field
-                    as={TextField}
-                    required
-                    fullWidth
-                    id="email"
-                    label="Email"
-                    name="email"
-                    helperText={<ErrorMessage name="email" />}
-                  />
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  disabled={isLoading}
+                  sx={{ mt: 3, mb: 2 }}
+                >
+                  {isLoading ? "Registering..." : "Register"}
+                </Button>
+                <Grid container justifyContent="flex-end">
+                  <Grid item>
+                    <Link to="/">Already have an account? Sign in</Link>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12}>
-                  <Field
-                    as={TextField}
-                    required
-                    fullWidth
-                    id="password"
-                    label="Password"
-                    name="password"
-                    type="password"
-                    helperText={<ErrorMessage name="password" />}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <Field
-                    as={TextField}
-                    required
-                    fullWidth
-                    name="confirm_password"
-                    label="Confirm Password"
-                    type="password"
-                    id="confirm_password"
-                    helperText={<ErrorMessage name="confirm_password" />}
-                  />
-                </Grid>
-              </Grid>
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                disabled={isLoading}
-                sx={{ mt: 3, mb: 2 }}
-              >
-                {isLoading ? "Registering..." : "Register"}
-              </Button>
-              <Grid container justifyContent="flex-end">
-                <Grid item>
-                  <Link to="/">Already have an account? Sign in</Link>
-                </Grid>
-              </Grid>
-            </Box>
-          </Form>
+              </Box>
+            </Form>
+          )}
         </Formik>
       </Box>
     </Container>
