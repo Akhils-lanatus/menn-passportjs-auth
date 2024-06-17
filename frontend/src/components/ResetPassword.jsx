@@ -65,7 +65,7 @@ export default function ResetPassword() {
                 resetForm();
                 showToast("success", response.data.message);
                 setIsLoading(null);
-                navigate("/login");
+                navigate("/");
               } else {
                 setIsLoading(null);
                 showToast("error", response.data.message);
@@ -115,7 +115,7 @@ export default function ResetPassword() {
               </Button>
               <Grid container justifyContent="flex-end">
                 <Grid item>
-                  <Link to="/login">Login Page</Link>
+                  <Link to="/">Login Page</Link>
                 </Grid>
               </Grid>
             </Box>

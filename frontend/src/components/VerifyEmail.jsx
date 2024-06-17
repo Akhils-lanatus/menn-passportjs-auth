@@ -61,7 +61,7 @@ export default function VerifyEmail() {
                 resetForm();
                 showToast("success", response.data.message);
                 setIsLoading(null);
-                navigate("/login");
+                navigate("/");
               } else {
                 setIsLoading(null);
                 showToast("error", response.data.message);
@@ -109,7 +109,7 @@ export default function VerifyEmail() {
               </Button>
               <Grid container justifyContent="flex-end">
                 <Grid item>
-                  <Link to="/">Register Page</Link>
+                  <Link to="/register">Register Page</Link>
                 </Grid>
               </Grid>
             </Box>

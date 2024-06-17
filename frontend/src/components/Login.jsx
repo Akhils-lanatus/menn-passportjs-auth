@@ -63,7 +63,7 @@ export default function Login() {
                 resetForm();
                 showToast("success", response.data.message);
                 setIsLoading(null);
-                navigate("/dashboard");
+                navigate("/user/dashboard");
               } else {
                 setIsLoading(null);
                 showToast("error", response.data.message);
@@ -115,7 +115,7 @@ export default function Login() {
                   <Link to="/reset-password-link">Forgot password</Link>
                 </Grid>
                 <Grid item xs={6} textAlign={"end"}>
-                  <Link to="/">{`Don't have an account? Sign Up`}</Link>
+                  <Link to="/register">{`Don't have an account? Sign Up`}</Link>
                 </Grid>
               </Grid>
             </Box>

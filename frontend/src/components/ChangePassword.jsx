@@ -34,7 +34,7 @@ export default function ChangePassword() {
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          Reset Password
+          Change Password
         </Typography>
         <Formik
           initialValues={{
@@ -66,12 +66,11 @@ export default function ChangePassword() {
                 values,
                 { withCredentials: true }
               );
-              console.log({ response });
               if (response.data.success) {
                 resetForm();
                 showToast("success", response.data.message);
                 setIsLoading(null);
-                navigate("/dashboard");
+                navigate("/user/dashboard");
               } else {
                 setIsLoading(null);
                 showToast("error", response.data.message);
@@ -134,7 +133,7 @@ export default function ChangePassword() {
               </Button>
               <Grid container justifyContent="flex-end">
                 <Grid item>
-                  <Link to="/dashboard">Goto Dashboard</Link>
+                  <Link to="/user/dashboard">Goto Dashboard</Link>
                 </Grid>
               </Grid>
             </Box>
