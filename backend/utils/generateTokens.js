@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { UserRefreshTokenModel } from "../models/userRefreshToken.model.js";
-const generateTokens = async (req, user) => {
+const generateTokens = async (req = {}, user) => {
   try {
     const payload = { _id: user._id, roles: user.roles };
     const accessTokenExp = Math.floor(Date.now() / 1000) + 100;
@@ -19,13 +19,13 @@ const generateTokens = async (req, user) => {
       {
         userId: user._id,
       },
-      { token: req.cookies.refreshToken || refreshToken },
+      { token: req?.cookies?.refreshToken || refreshToken },
       { upsert: true }
     );
 
     return {
       accessToken,
-      refreshToken: req.cookies.refreshToken || refreshToken,
+      refreshToken: req?.cookies?.refreshToken || refreshToken,
       accessTokenExp,
       refreshTokenExp,
     };

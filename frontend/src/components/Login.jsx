@@ -15,6 +15,7 @@ import { BACKEND_URL } from "../constants/constant";
 import { showToast } from "../utils/showToast";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import GoogleIcon from "@mui/icons-material/Google";
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(null);
@@ -110,17 +111,29 @@ export default function Login() {
               >
                 {isLoading ? "Signing In..." : "Sign In"}
               </Button>
-              <Grid container justifyContent="space-between">
-                <Grid item xs={6} textAlign={"start"}>
-                  <Link to="/reset-password-link">Forgot password</Link>
-                </Grid>
-                <Grid item xs={6} textAlign={"end"}>
-                  <Link to="/register">{`Don't have an account? Sign Up`}</Link>
-                </Grid>
-              </Grid>
             </Box>
           </Form>
         </Formik>
+        <Button
+          fullWidth
+          variant="contained"
+          disabled={isLoading}
+          sx={{ mt: 3, mb: 2 }}
+          startIcon={<GoogleIcon />}
+          onClick={() => {
+            window.open("http://localhost:8000/api/v1/auth/google", "_self");
+          }}
+        >
+          Login With Google
+        </Button>
+        <Grid container justifyContent="space-between">
+          <Grid item xs={6} textAlign={"start"}>
+            <Link to="/reset-password-link">Forgot password</Link>
+          </Grid>
+          <Grid item xs={6} textAlign={"end"}>
+            <Link to="/register">{`Don't have an account? Sign Up`}</Link>
+          </Grid>
+        </Grid>
       </Box>
     </Container>
   );
