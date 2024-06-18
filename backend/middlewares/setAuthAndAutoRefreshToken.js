@@ -11,7 +11,6 @@ export const accessTokenAutoRefresh = async (req, res, next) => {
 
     if (!cookiesAccessToken || isTokenExpired(cookiesAccessToken)) {
       const refToken = req.cookies.refreshToken;
-      console.log(req.cookies);
       if (!refToken) {
         return res.status(200).json({
           success: false,

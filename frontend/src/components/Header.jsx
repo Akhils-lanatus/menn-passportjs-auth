@@ -15,7 +15,6 @@ export default function Header() {
       const response = await axios.post(`${BACKEND_URL}/logout`, null, {
         withCredentials: true,
       });
-      console.log(response);
       if (response.data.success) {
         showToast("success", response.data.message);
         navigate("/");

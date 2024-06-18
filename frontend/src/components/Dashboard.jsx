@@ -25,7 +25,6 @@ export default function UserCard() {
     };
     getUserProfileData();
   }, []);
-  console.log({ userData });
   return (
     <Container sx={{ mt: 4 }}>
       <Box

@@ -65,7 +65,6 @@ export default function SignUp() {
           })}
           onSubmit={async (values, { resetForm }) => {
             try {
-              console.log(values);
               setIsLoading(true);
               const response = await axios.post(
                 `${BACKEND_URL}/register`,
