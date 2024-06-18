@@ -7,6 +7,7 @@ import Cookie from "js-cookie";
 import { BACKEND_URL } from "../constants/constant";
 import { showToast } from "../utils/showToast";
 import axios from "axios";
+import CustomErrorResponse from "../utils/ApiErrorResponse";
 export default function Header() {
   const isAuth = Cookie.get("is_auth");
   const navigate = useNavigate();
@@ -19,11 +20,10 @@ export default function Header() {
         showToast("success", response.data.message);
         navigate("/");
       } else {
-        showToast("error", response.data.message);
+        CustomErrorResponse(response, navigate);
       }
     } catch (error) {
-      console.log(error);
-      showToast("error", "Something Went Wrong");
+      CustomErrorResponse({}, () => {}, "Something went wrong");
     }
   };
   return (

@@ -15,10 +15,32 @@ import { BACKEND_URL } from "../constants/constant";
 import { showToast } from "../utils/showToast";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import CustomErrorResponse from "../utils/ApiErrorResponse";
 
 export default function ChangePassword() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(null);
+  const handleSubmit = async (values, { resetForm }) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.post(
+        `${BACKEND_URL}/change-password`,
+        values,
+        { withCredentials: true }
+      );
+      if (response.data.success) {
+        resetForm();
+        showToast("success", response.data.message);
+        navigate("/user/dashboard");
+      } else {
+        CustomErrorResponse(response, navigate);
+      }
+    } catch (error) {
+      CustomErrorResponse({}, {}, "Something went wrong");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -58,29 +80,7 @@ export default function ChangePassword() {
                 "Password and Confirm Password doesn't match"
               ),
           })}
-          onSubmit={async (values, { resetForm }) => {
-            try {
-              setIsLoading(true);
-              const response = await axios.post(
-                `${BACKEND_URL}/change-password`,
-                values,
-                { withCredentials: true }
-              );
-              if (response.data.success) {
-                resetForm();
-                showToast("success", response.data.message);
-                setIsLoading(null);
-                navigate("/user/dashboard");
-              } else {
-                setIsLoading(null);
-                showToast("error", response.data.message);
-              }
-            } catch (error) {
-              console.log(error);
-              setIsLoading(null);
-              showToast("error", "Something Went Wrong");
-            }
-          }}
+          onSubmit={handleSubmit}
         >
           <Form>
             <Box sx={{ mt: 3 }}>

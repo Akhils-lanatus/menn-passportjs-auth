@@ -12,9 +12,11 @@ export const accessTokenAutoRefresh = async (req, res, next) => {
     if (!cookiesAccessToken || isTokenExpired(cookiesAccessToken)) {
       const refToken = req.cookies.refreshToken;
       if (!refToken) {
+        req.cookies.is_auth && res.clearCookie("is_auth");
         return res.status(200).json({
           success: false,
           message: "Unauthorized Request - Please Login",
+          token: false,
         });
       }
       const { accessToken, refreshToken, accessTokenExp, refreshTokenExp } =
